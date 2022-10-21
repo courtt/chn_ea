@@ -2,7 +2,13 @@ import numpy as np
 import os
 from glob import glob
 class NEIData:
+    # names = ['igrid'....]
     def __init__(self,exp,amb,model_num):
+        # docstring for the class 
+        # what is the purpose, some of the methods, input variables
+        # save intermediate data files
+        # for name in self.names:
+        #   self.__dict__[name] = None
         self.igrid  = None
         self.age    = None
         self.rad    = None
@@ -24,6 +30,9 @@ class NEIData:
         path = os.cwd()
         infile = path + exp + '_' + amb + '/output/snr_Ia_prof_a_' + str(model_num) +'.dat'
         dat = np.loadtxt(infile)
+        # names = ['igrid'..'tau']
+        # for name,indeces in zip(names,indeces):
+        # self.__dict__[name] = dat:
         igrid= dat[:,0]
         age  = dat[:,1]
         rad  = dat[:,2] #cm
@@ -96,7 +105,9 @@ class NEIData:
                     layer_list[layer].append(layer_ind)
                     ne_list[layer].append(ne[layer_ind])
                     age_list[layer].append(age[layer_ind]*3.154e+7)
-
+# create a big matrix 562x100 ne and tau
+# age list 1-d array
+# layer list                 
             
         for layer in range(CD_layer):
             if len(age_list[layer]) > 0:
@@ -105,4 +116,39 @@ class NEIData:
                 else:
                     tau.append(np.integrate.trapz(ne_list[layer],age_list[layer]))
 
-        return tau
+        return tau # self.tau=tau
+
+# this is how i'll do this later when calling the class
+# hd = HydroData(exp,amb,model_num)
+# hd.rad
+'''
+infile = np.sort(glob('/Users/travis/pn_spectra/ddt40_2p0_uniform/output/snr_Ia_prof_a_1*.dat'))
+target_file = '/Users/travis/pn_spectra/ddt40_2p0_uniform/output/snr_Ia_prof_a_1100.dat'
+target_ind = np.where(infile==target_file)[0][0]
+CD_layer=400 
+
+layer_list  = np.arange(1,CD_layer+1)
+ne_t_arr    = np.zeros((CD_layer,101))
+ne_arr      = np.zeros((CD_layer,101))
+age_arr     = np.zeros(101)
+# for i in range(len(infile[:target_ind + 1])):
+for i in range(len(infile)):
+
+    dat = np.loadtxt(infile[i])
+
+    if len(dat.shape) == 1:
+        dat = dat.reshape([1,len(dat)])
+            
+    shocked_layers = dat[:,0]
+    ne = dat[:,11]
+
+    age_arr[i] = dat[0,1]
+
+    for j,layer in enumerate(layer_list):
+        if layer in shocked_layers:
+            ne_arr[j,i] = ne[layer==shocked_layers]
+        else:
+            ne_arr[j,i] = 0
+
+print(ne_arr[0])
+'''

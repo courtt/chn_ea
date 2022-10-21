@@ -4,12 +4,12 @@ import os
 from nei import read_columns
 
 class HydroData:
+    names = ['layer','rad','rho','vel','u_int']
+
     def __init__(self,exp,amb,model_num):
-        self.layer  = None
-        self.rad    = None
-        self.rho    = None
-        self.vel    = None
-        self.u_int  = None
+        for name in self.names:
+            self.__dict__[name] = None
+
         self.read_columns(exp,amb,model_num)
         
 
@@ -17,17 +17,21 @@ class HydroData:
         path = os.cwd()
         filename = path + exp + '/' + amb + '/snr_Ia_' + model_num +'.dat'
         dat = np.loadtxt(filename)
-        layer   = dat[:,0]
-        rad     = dat[:,1]
-        rho     = dat[:,2]
-        vel     = dat[:,3]
-        u_int   = dat[:,4]
+        for i, name in enumerate(self.names):
+            self.__dict__[name] = dat[:,i]  
+        # Kept for future readability since I'm new to classes
+        # layer   = dat[:,0]
+        # rad     = dat[:,1]
+        # rho     = dat[:,2]
+        # vel     = dat[:,3]
+        # u_int   = dat[:,4]
 
-        self.layer  = layer
-        self.rad    = rad
-        self.rho    = rho
-        self.vel    = vel
-        self.u_int  = u_int
+        # self.layer  = layer
+        # self.rad    = rad
+        # self.rho    = rho
+        # self.vel    = vel
+        # self.u_int  = u_int
 
-
+# using and calling class
 # hd = HydroData(exp,amb,model_num)
+# hd.rad 
