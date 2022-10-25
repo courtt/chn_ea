@@ -109,28 +109,30 @@ class NEIData:
         return ne_t_arr
 
 
-    def emission_measure_avg(self,exp,amb,model_num,CD_layer,ion):
+    def emission_measure_avg(self,exp,amb,CD_layer,model_num,ion):
         '''
-        Calculates emission measure averages for velocity and ionization timescale for a given age (outfile)
+        Calculates tau for each layer from the RS to CD for all ages
 
         Parameters
         ----------
-        base_dir : str, directory name of files 
+        exp : str, base of directory corresponding to explosion model
+
+        amb : str, end of directory corresponding to ambient medium and any extras
 
         CD_layer : int, layer number of CD in output
 
-        out_file_num: number of output file to which you're integrating 
+        model_num: number of output file to which you're integrating 
         e.g. snr_Ia_prof_a_1065.dat would be 1065
 
         ion      : str, ion symbol for which you want to calculate
         '''
-        path = os.cwd()
-        infile = path + exp + '_' + amb + '/output/snr_Ia_prof_a_' + str(model_num) +'.dat'
+        infile = '/Users/travis/pn_spectra/'+exp+'_'+amb+'/output/snr_Ia_prof_a_'+ str(model_num) + '.dat'
         n_spec  = 19
-
         ion_name = ['H','He','C','N','O','Ne','Mg','Si','S','Ar','Ca','Fe','Ni','Na','Al','P','Ti','Cr','Mn']
         i_spec 	= ion_name.index(ion)  #index of element, e.g., 4 = 'O', 11 = 'Fe'
         nj  = np.array([1,2,6,7,8,10,12,14,16,18,20,26,28,11,13,15,22,24,25])
+        km_to_cm = 1e5
+
         ind = np.zeros([n_spec])
         ix  = 0
         for no in range(n_spec):
@@ -143,32 +145,29 @@ class NEIData:
         if len(dat.shape) == 1:
             dat = dat.reshape([1,len(dat)])
 
+        layer_list  = np.arange(1,CD_layer+1)
         i_CD = np.where(dat[:,0] == CD_layer)[0][0]
+
+        shocked_layers = dat[:i_CD+1,0]
         xion = dat[:i_CD+1,33:]
         ne   = dat[:i_CD+1,11]
         nH   = dat[:i_CD+1,12]
         vol  = dat[:i_CD+1,5]
-
         ab   = 10**(dat[:i_CD+1,14:33]-12.0)
-        vel  = dat[:i_CD+1,8]/1e5 
+        vel  = dat[:i_CD+1,8]*km_to_cm
+
+
         EM_x = ne*nH*ab[:,i_spec]*vol     
         frac = xion[:i_CD+1,ind[i_spec]:ind[i_spec]+nj[i_spec]+1] #gives array of ion fractions
-
         charges = [np.arange(nj[i_spec]+1) for i in range(i_CD+1)]
-
         ionization_state = np.sum(charges*frac,axis=1)/np.sum(frac,axis=1)
-        ne_t_arr = np.array(self.ne_t_calc(exp,amb,CD_layer))
-        tau = ne_t_arr[:,model_num - 1000 - 1] # the -1 is because there is no tau for the first output bc no time elapsed
-
+        ne_t_arr = self.ne_t_calc(exp,amb,CD_layer)
+        tau = ne_t_arr[:,model_num - 1000 - 1][np.isin( layer_list,shocked_layers)] # the -1 is because there is no tau for the first output bc no time elapsed
         ion_s_EM_avg = np.sum(ionization_state*EM_x) / np.sum(EM_x)
         tau_EM_avg = np.sum(tau*EM_x) / np.sum(EM_x)
         vel_EM_avg = np.sum(vel*EM_x) / np.sum(EM_x)
 
         return ion_s_EM_avg, tau_EM_avg, vel_EM_avg
-
-
-
-    
 
 
 # this is how i'll do this later when calling the class
