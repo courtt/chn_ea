@@ -10,61 +10,28 @@ class NEIData:
         # save intermediate data files
         # for name in self.names:
         #   self.__dict__[name] = None
-        self.igrid  = None
-        self.age    = None
-        self.rad    = None
-        self.vol    = None
-        self.vel    = None
-        self.Te     = None
-        self.ne     = None
-        self.nH     = None
-        self.ni     = None
-        self.ab     = None
-        self.jmax   = None
-        self.xion   = None
-        self.Ti     = None
-        self.ztau   = None
-        self.tau    = None
-        self.read_columns(exp,amb,model_num)
-
-
-    def read_columns(self,exp,amb,model_num): 
-        path = os.cwd()
+        path = os.getcwd()
         infile = path + exp + '_' + amb + '/output/snr_Ia_prof_a_' + str(model_num) +'.dat'
         dat = np.loadtxt(infile)
         # names = ['igrid'..'tau']
         # for name,indeces in zip(names,indeces):
         # self.__dict__[name] = dat:
-        igrid= dat[:,0]
-        age  = dat[:,1]
-        rad  = dat[:,2] #cm
-        vol  = dat[:,5]
-        vel	 = dat[:,8]
-        Te   = dat[:,9]
-        ne   = dat[:,11]
-        nH   = dat[:,12]
-        ni   = dat[:,13]
-        ab   = 10**(dat[:,14:33]-12.0)
-        jmax = np.argmax(ab)
-        xion = dat[:,33:330]
-        Ti   = dat[:,330:349]
-        ztau = dat[:,349]
-
-        self.igrid = igrid
-        self.age   = age  
-        self.rad   = rad  
-        self.vol   = vol  
-        self.vel   = vel	 
-        self.Te    = Te   
-        self.ne    = ne   
-        self.nH    = nH       
-        self.ni    = ni   
-        self.ab    = ab   
-        self.jmax  = jmax 
-        self.xion  = xion 
-        self.Ti    = Ti   
-        self.ztau  = ztau  
-
+        self.igrid= dat[:,0]
+        self.age  = dat[:,1]
+        self.rad  = dat[:,2] #cm
+        self.mcorod=dat[:,3] #Lagrangian mass coordinate
+        self.mgrid= dat[:,4] #mass of grid 
+        self.vol  = dat[:,5]
+        self.vel  = dat[:,8]
+        self.Te   = dat[:,9]
+        self.ne   = dat[:,11]
+        self.nH   = dat[:,12]
+        self.ni   = dat[:,13]
+        self.ab   = 10**(dat[:,14:33]-12.0)
+        self.jmax = np.argmax(self.ab)
+        self.xion = dat[:,33:330]
+        self.Ti   = dat[:,330:349]
+        self.ztau = dat[:,349]
 
 
     def ne_t_calc(self,exp,amb,CD_layer):
