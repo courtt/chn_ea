@@ -26,7 +26,7 @@ class HydroFullRun:
             layer_num (int): layer of interest
         """
         infile = np.sort(glob('/Users/travis/pn_spectra/' +
-                              exp+'_'+amb+'/output/snr_Ia_prof_a_1*.dat'))
+                              exp+'_'+amb+'/output/snr_Ia_1*.dat'))
         self.rad = np.zeros(100)
         self.rho = np.zeros(100)
         self.vel = np.zeros(100)
