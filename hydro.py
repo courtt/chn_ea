@@ -1,12 +1,11 @@
 import numpy as np
-from pathlib import Path
 from glob import glob
 
 
 class HydroData:
     def __init__(self, exp, amb, model_num):
-        path = Path.cwd()
-        filename = path + exp + "/" + amb + "/snr_Ia_" + model_num + ".dat"
+        filename = exp + "_" + amb + \
+            "/output/snr_Ia_" + str(model_num) + ".dat"
         dat = np.loadtxt(filename)
 
         self.layer = dat[:, 0]
@@ -27,8 +26,7 @@ class HydroFullRun:
             layer_num (int): layer of interest
         """
 
-        infile = np.sort(glob('/Users/travis/pn_spectra/' +
-                              exp+'_'+amb+'/output/snr_Ia_1*.dat'))
+        infile = np.sort(glob(exp+'_'+amb+'/output/snr_Ia_1*.dat'))
         self.rad = np.zeros(101)
         self.rho = np.zeros(101)
         self.vel = np.zeros(101)
