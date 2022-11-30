@@ -37,10 +37,10 @@ class HydroFullRun:
 
             self.layer = dat[:, 0]
 
-            self.rad = dat[layer_num - 1, 1]
-            self.rho = dat[layer_num - 1, 2]
-            self.vel = dat[layer_num - 1, 3]
-            self.temp = dat[layer_num - 1, 4]
+            self.rad[i] = dat[layer_num - 1, 1]
+            self.rho[i] = dat[layer_num - 1, 2]
+            self.vel[i] = dat[layer_num - 1, 3]
+            self.temp[i] = dat[layer_num - 1, 4]
 # using and calling class
 # hd = HydroData(exp,amb,model_num)
 # hd.rad
