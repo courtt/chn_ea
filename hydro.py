@@ -1,11 +1,11 @@
 import numpy as np
-import os
+from pathlib import Path
 from glob import glob
 
 
 class HydroData:
     def __init__(self, exp, amb, model_num):
-        path = os.getcwd()
+        path = Path.cwd()
         filename = path + exp + "/" + amb + "/snr_Ia_" + model_num + ".dat"
         dat = np.loadtxt(filename)
 
@@ -18,24 +18,24 @@ class HydroData:
 
 class HydroFullRun:
     def __init__(self, exp, amb, layer_num):
-        """Reads values for a layer through each timestep 
+        """Reads values for a layer through each timestep, it's assumed a run has 100 
+        profiles created. 
 
         Args:
             exp (str): base of directory corresponding to explosion model
             amb (str): end of directory corresponding to ambient medium and any extras
             layer_num (int): layer of interest
         """
+
         infile = np.sort(glob('/Users/travis/pn_spectra/' +
                               exp+'_'+amb+'/output/snr_Ia_1*.dat'))
-        self.rad = np.zeros(100)
-        self.rho = np.zeros(100)
-        self.vel = np.zeros(100)
-        self.temp = np.zeros(100)
+        self.rad = np.zeros(101)
+        self.rho = np.zeros(101)
+        self.vel = np.zeros(101)
+        self.temp = np.zeros(101)
 
         for i in range(len(infile)):
             dat = np.loadtxt(infile[i])
-
-            self.layer = dat[:, 0]
 
             self.rad[i] = dat[layer_num - 1, 1]
             self.rho[i] = dat[layer_num - 1, 2]
