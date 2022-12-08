@@ -17,12 +17,16 @@ class NEIData:
         """
         path = os.getcwd()
         infile = (
-            path + exp + "_" + amb + "/output/snr_Ia_prof_a_" +
+            path + '/'+ exp + "_" + amb + "/output/snr_Ia_prof_a_" +
             str(model_num) + ".dat"
         )
         dat = np.loadtxt(infile)
+
         if len(dat.shape) == 1:
             dat = dat.reshape([1, len(dat)])
+        self.exp = exp
+        self.amb = amb
+        self.model_num = model_num
         self.igrid = dat[:, 0]
         self.age = dat[:, 1]
         self.rad = dat[:, 2]  # cm
@@ -77,7 +81,7 @@ class NEIData:
         ionization = np.sum(frac*charges, axis=1)
 
         ax1.semilogy(self.mcoord/msun, self.Te)
-        ax2.semilogy(self.mcoord/msun, self.rho, label=f'{self.age:.0f}')
+        ax2.semilogy(self.mcoord/msun, self.rho)
         ax3.semilogy(self.mcoord/msun, self.ztau)
         ax4.semilogy(self.mcoord/msun, self.Te/np.mean(self.Ti, axis=1))
         ax5.plot(self.mcoord/msun, ionization)
@@ -85,6 +89,7 @@ class NEIData:
         ax1.set_xscale('log')
         ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
         ax1.set_ylim(1e6, 1e9)
+        ax1.set_title(self.exp + '_' + self.amb + '_' + self.moden_num + '_' + ion)
 
         ax2.legend(ncol=2, title='Age [yr]')
         ax2.set_ylabel(r'$\mathrm{\rho [g/cm^3]}$')
@@ -93,10 +98,10 @@ class NEIData:
 
         ax4.set_ylabel(r'$\mathrm{T_e/<T_i>}$')
 
-        ax5.set_ylabel(r'$\mathrm{<Z_{Fe}>}$')
+        ax5.set_ylabel(f'$\mathrm{<Z_{self.ion}>}$')
         ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
 
-        fig.savefig()
+        fig.savefig(self.exp + '_' + self.amb + '_' + self.moden_num + ion + '_diag.pdf')
 
 
 class NEIFullRun:
