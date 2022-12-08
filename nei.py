@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 from glob import glob
 from scipy import integrate
@@ -25,9 +26,10 @@ class NEIData:
         self.igrid = dat[:, 0]
         self.age = dat[:, 1]
         self.rad = dat[:, 2]  # cm
-        self.mcorod = dat[:, 3]  # Lagrangian mass coordinate
+        self.mcoord = dat[:, 3]  # Lagrangian mass coordinate
         self.mgrid = dat[:, 4]  # mass of grid
         self.vol = dat[:, 5]
+        self.rho = dat[:, 6]
         self.vel = dat[:, 8]
         self.Te = dat[:, 9]
         self.ne = dat[:, 11]
@@ -38,6 +40,63 @@ class NEIData:
         self.xion = dat[:, 33:330]
         self.Ti = dat[:, 330:349]
         self.ztau = dat[:, 349]
+
+    def plot_diagnostic(self, ion):
+        """Reads the data from the NEI profile and plots electron temp (Te), density (rho),
+        ionizaiton timescale (tau), electron temperature / mean ion temperature, and 
+        ionization state (ionization) as a function of Lagrangian mass coordinate
+
+        Args:
+            exp (str): base of directory corresponding to explosion model
+            amb (str): end of directory corresponding to ambient medium and any extras
+            model_num (int): Model number (1000-1100) of interest
+            ion (str): Ion of interest for ionization state
+        """
+        msun = 1.989e33
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
+            5, 1, sharex=True, figsize=(8, 10))
+
+        n_spec = 19
+        ion_name = ['H', 'He', 'C', 'N', 'O', 'Ne', 'Mg', 'Si', 'S',
+                    'Ar', 'Ca', 'Fe', 'Ni', 'Na', 'Al', 'P', 'Ti', 'Cr', 'Mn']
+        # index of element, e.g., 4 = 'O', 11 = 'Fe'
+        i_spec = ion_name.index(ion)
+        nj = np.array([1, 2, 6, 7, 8, 10, 12, 14, 16, 18,
+                       20, 26, 28, 11, 13, 15, 22, 24, 25])
+
+        ind = np.zeros([n_spec])
+        ix = 0
+        for no in range(n_spec):
+            ixn = ix + nj[no]
+            ind[no] = ix
+            ix = ixn+1
+        ind = np.array(ind, dtype='int')
+
+        frac = self.xion[:, ind[i_spec]:ind[i_spec]+nj[i_spec]+1]
+        charges = np.arange(nj[i_spec]+1)
+        ionization = np.sum(frac*charges, axis=1)
+
+        ax1.semilogy(self.mcoord/msun, self.Te)
+        ax2.semilogy(self.mcoord/msun, self.rho, label=f'{self.age:.0f}')
+        ax3.semilogy(self.mcoord/msun, self.ztau)
+        ax4.semilogy(self.mcoord/msun, self.Te/np.mean(self.Ti, axis=1))
+        ax5.plot(self.mcoord/msun, ionization)
+
+        ax1.set_xscale('log')
+        ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
+        ax1.set_ylim(1e6, 1e9)
+
+        ax2.legend(ncol=2, title='Age [yr]')
+        ax2.set_ylabel(r'$\mathrm{\rho [g/cm^3]}$')
+
+        ax3.set_ylabel(r'$\mathrm{\tau [cm^{-3}s]}$')
+
+        ax4.set_ylabel(r'$\mathrm{T_e/<T_i>}$')
+
+        ax5.set_ylabel(r'$\mathrm{<Z_{Fe}>}$')
+        ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
+
+        fig.savefig()
 
 
 class NEIFullRun:
