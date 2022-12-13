@@ -98,7 +98,7 @@ class NEIData:
 
         ax4.set_ylabel(r'$\mathrm{T_e/<T_i>}$')
 
-        ax5.set_ylabel(f'$\mathrm{<Z_{self.ion}>}$')
+        ax5.set_ylabel(r'$\mathrm{<Z_>}$')
         ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
 
         fig.savefig(self.exp + '_' + self.amb + '_' + self.moden_num + ion + '_diag.pdf')
