@@ -17,7 +17,7 @@ class NEIData:
         """
         path = os.getcwd()
         infile = (
-            path + '/'+ exp + "_" + amb + "/output/snr_Ia_prof_a_" +
+            path + '/' + exp + "_" + amb + "/output/snr_Ia_prof_a_" +
             str(model_num) + ".dat"
         )
         dat = np.loadtxt(infile)
@@ -89,7 +89,8 @@ class NEIData:
         ax1.set_xscale('log')
         ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
         ax1.set_ylim(1e6, 1e9)
-        ax1.set_title(self.exp + '_' + self.amb + '_' + self.moden_num + '_' + ion)
+        ax1.set_title(self.exp + '_' + self.amb +
+                      '_' + self.moden_num + '_' + ion)
 
         ax2.legend(ncol=2, title='Age [yr]')
         ax2.set_ylabel(r'$\mathrm{\rho [g/cm^3]}$')
@@ -98,11 +99,130 @@ class NEIData:
 
         ax4.set_ylabel(r'$\mathrm{T_e/<T_i>}$')
 
-        ax5.set_ylabel(f'$\mathrm{<Z_{self.ion}>}$')
+        ax5.set_ylabel(r'$\mathrm{<Z_'+self.ion+'>}$')
         ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
 
-        fig.savefig(self.exp + '_' + self.amb + '_' + self.moden_num + ion + '_diag.pdf')
+        fig.savefig(self.exp + '_' + self.amb + '_' +
+                    self.model_num + ion + '_diag.pdf')
 
+    def spectrum_XRISM(self, i_CD):
+        """Outputs the spectrum for a given model convolved with XRISM
+
+        Args:
+            i_CD (int): Layer at which the CD is placed (N_part_ejecta in src files)
+
+        Returns:
+            Ec (float): Centered energy bins
+            lum_ej (float): Luminosity of ejecta in ph/s/keV
+            lum_amb (float): Luminosity of ambient medium in ph/s/keV
+            lum (float): Total luminosity in ph/s/keV
+
+        """
+        import sys
+        import os
+        import numpy as np
+        import pyatomdb.atomdb
+        import pyatomdb.spectrum as spec
+        import astropy.io.fits as fits
+        from pathos.multiprocessing import ProcessingPool
+        import pathos as pa
+        keV 	= 1e3*1.602e-12
+
+        # XRISM
+        myrmf = os.path.expandvars('$ATOMDB/resolve_h7ev_2019a.rmf')
+        myarf = os.path.expandvars(
+            '$ATOMDB/resolve_pnt_spec_noGV_20190611.arf')
+
+        hdul = fits.open(myrmf)
+
+        outfile = self.exp + '_' + self.amb + \
+            '/output/sed_XRISM_' + self.model_num + '.dat'
+        n_spec = 19
+        dE = 0.0005
+        Emax    = np.max(hdul[2].data['E_MAX'])          #* spectral bin max [keV]
+        Emin    = np.min(hdul[2].data['E_MIN'])           #* spectral bin min [keV]
+        NE = 50001
+        E = np.linspace(Emin,Emax,NE)
+        if os.path.exists(outfile):
+            replot = 1
+        if not replot:
+
+            n_part = len(self.igrid)
+            print('Model:', self.exp+'_'+self.amb, self.model_num)
+            print('data dimension:', n_part)
+
+            zatom 	= np.array([1,2,6,7,8,10,12,14,16,18,20,26,28,11,13,15,22,24,25])
+            nj		= np.array([1,2,6,7,8,10,12,14,16,18,20,26,28,11,13,15,22,24,25])
+
+            ind = np.zeros([n_spec])
+            ix  = 0
+            for no in range(n_spec):
+                    ixn = ix + nj[no]
+                    ind[no] = ix
+                    ix = ixn+1
+            ind = np.array(ind,dtype='int') 
+
+            nei = spec.NEISession()
+            nei.set_response(myrmf,arf=myarf)
+            nei.elements = list(zatom) 
+            
+            #AG89 values
+            ab_init   = pyatomdb.atomdb.get_abundance()
+            ab_rel    = dict(zip(np.arange(1,31),np.zeros(30)))
+            popul     = dict(zip(np.arange(1,31),np.zeros(30)))
+
+            def spec_run(i):
+                lum_ej = np.zeros(len(E)-1)+1e-50
+                lum_csm = np.zeros(len(E)-1)+1e-50
+
+                if (self.Te < 0.000862*keV/1.381e-16): 
+                        return lum_ej, lum_csm
+
+                for j in range(n_spec):
+                        ab_rel[zatom[j]] = (self.ab[j]/self.ab[self.jmax])/ab_init[zatom[j]]
+                        popul[zatom[j]]  = self.xion[ind[j]:ind[j]+nj[j]+1]
+                nei.abundsetvector = ab_rel
+		
+                try:
+                        if self.igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
+                                lum_ej = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
+
+                        else:
+                                lum_amb = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
+
+                except:
+                        print("warning...", self.igrid, self.ne, self.Te, self.vol)
+			
+                sys.stdout.write("\rProgress:%i/%i (particle:%i) (peak Z:%i)" %
+                                 (i+1, len(self.igrid), self.igrid, zatom[self.jmax]))
+                sys.stdout.write(f"Progress:{i+1}/{n_part} (particle:{self.igrid}) (peak Z:{zatom[self.jmax]})")
+                sys.stdout.flush()
+
+                return lum_ej, lum_amb
+
+            pool = ProcessingPool(nodes=pa.helpers.cpu_count())
+            result = np.array(pool.map(spec_run, range(n_part)))  # ,dtype=float)
+
+            lum_ej = sum(result[:, 0], 0)  # ph/s/bin
+            lum_am = sum(result[:, 1], 0)
+
+            Ec = 0.5*(E[1:]+E[:-1])
+            #lum_ej *= (Ec**2/dE)*1e3*1.602e-12
+            #lum_am *= (Ec**2/dE)*1e3*1.602e-12
+            lum_ej /= dE  # ph/s/keV
+            lum_am /= dE  # ph/s/keV
+            lum = lum_ej+lum_am
+
+            np.savetxt(outfile, np.array([Ec, lum_ej, lum_am, lum]).T)
+        else:
+            print('Outfile already created')
+            dat = np.loadtxt(outfile)
+            Ec = dat[:, 0]
+            lum_ej = dat[:, 1]
+            lum_am = dat[:, 2]
+            lum = dat[:, 3]
+
+        return Ec, lum_ej, lum_am, lum 
 
 class NEIFullRun:
     def __init__(self, exp, amb, N_part):
@@ -122,7 +242,7 @@ class NEIFullRun:
         self.age_list = np.zeros((N_part, 101))
         self.rad_list = np.zeros((N_part, 101))   # cm
         # Lagrangian mass coordinate
-        self.mcorod_list = np.zeros((N_part, 101))
+        self.mcoord_list = np.zeros((N_part, 101))
         self.mgrid_list = np.zeros((N_part, 101))   # mass of grid
         self.vol_list = np.zeros((N_part, 101))
         self.vel_list = np.zeros((N_part, 101))
@@ -174,7 +294,7 @@ class NEIFullRun:
             self.igrid = dat[:, 0]
             self.age = dat[:, 1]
             self.rad = dat[:, 2]  # cm
-            self.mcorod = dat[:, 3]  # Lagrangian mass coordinate
+            self.mcoord = dat[:, 3]  # Lagrangian mass coordinate
             self.mgrid = dat[:, 4]  # mass of grid
             self.vol = dat[:, 5]
             self.vel = dat[:, 8]
