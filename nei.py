@@ -99,11 +99,7 @@ class NEIData:
 
         ax4.set_ylabel(r'$\mathrm{T_e/<T_i>}$')
 
-<<<<<<< HEAD
         ax5.set_ylabel(r'$\mathrm{<Z_>}$')
-=======
-        ax5.set_ylabel(r'$\mathrm{<Z_'+self.ion+'>}$')
->>>>>>> 3e0a85cc257c8cd59f6770e6490a8356bc0c9331
         ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
 
         fig.savefig(self.exp + '_' + self.amb + '_' +
