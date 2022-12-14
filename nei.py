@@ -90,7 +90,7 @@ class NEIData:
         ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
         ax1.set_ylim(1e6, 1e9)
         ax1.set_title(self.exp + '_' + self.amb +
-                      '_' + self.moden_num + '_' + ion)
+                      '_' + self.model_num + '_' + ion)
 
         ax2.legend(ncol=2, title='Age [yr]')
         ax2.set_ylabel(r'$\mathrm{\rho [g/cm^3]}$')
@@ -105,34 +105,7 @@ class NEIData:
         fig.savefig(self.exp + '_' + self.amb + '_' +
                     str(self.model_num) + ion + '_diag.pdf')
 
-        def spec_run(self,i):
-            lum_ej = np.zeros(len(E)-1)+1e-50
-            lum_csm = np.zeros(len(E)-1)+1e-50
 
-            if (self.Te < 0.000862*keV/1.381e-16): 
-                return lum_ej, lum_csm
-
-            for j in range(n_spec):
-                ab_rel[zatom[j]] = (self.ab[j]/self.ab[self.jmax])/ab_init[zatom[j]]
-                popul[zatom[j]]  = self.xion[ind[j]:ind[j]+nj[j]+1]
-                nei.abundsetvector = ab_rel
-                    
-            try:
-                if self.igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
-                    lum_ej = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
-
-                else:
-                    lum_amb = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
-
-            except:
-                print("warning...", self.igrid, self.ne, self.Te, self.vol)
-                    
-            sys.stdout.write("\rProgress:%i/%i (particle:%i) (peak Z:%i)" %
-                             (i+1, len(self.igrid), self.igrid, zatom[self.jmax]))
-            sys.stdout.write(f"Progress:{i+1}/{n_part} (particle:{self.igrid}) (peak Z:{zatom[self.jmax]})")
-            sys.stdout.flush()
-
-            return lum_ej, lum_amb
                 
 
 
@@ -203,12 +176,27 @@ class NEIData:
             ab_rel    = dict(zip(np.arange(1,31),np.zeros(30)))
             popul     = dict(zip(np.arange(1,31),np.zeros(30)))
 
-
-            pool = ProcessingPool(nodes=pa.helpers.cpu_count())
-            result = np.array(pool.map(spec_run, range(n_part)))  # ,dtype=float)
-
-            lum_ej = sum(result[:, 0], 0)  # ph/s/bin
-            lum_am = sum(result[:, 1], 0)
+            for i in range(n_part):
+                xion = self.xion[i]
+                ne   = self.ne[i]
+                nH   = self.nH[i]
+                Te   = self.Te[i]
+                vol  = self.vol[i]
+                ab   = self.ab[i]
+                jmax = np.argmax(ab)
+                igrid = self.igrid[i]
+                for j in range(n_spec):
+                        ab_rel[zatom[j]] = (ab[j]/ab[jmax])/ab_init[zatom[j]]
+                        popul[zatom[j]]  = xion[ind[j]:ind[j]+nj[j]+1]
+                nei.abundsetvector = ab_rel
+                                
+                if igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
+                    lum_ej += ne*nH*ab[jmax]*nei.return_spectrum(Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*vol #ph/s/bin
+                else:
+                    lum_am += ne*nH*ab[jmax]*nei.return_spectrum(Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*vol #ph/s/bin
+                sys.stdout.write("\rProgress:%i/%i (particle:%i) (peak Z:%i)"%(i+1,n_part,igrid,zatom[jmax]))
+                sys.stdout.flush()
+                                                              
 
             Ec = 0.5*(E[1:]+E[:-1])
             #lum_ej *= (Ec**2/dE)*1e3*1.602e-12
