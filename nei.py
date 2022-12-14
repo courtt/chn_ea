@@ -103,7 +103,38 @@ class NEIData:
         ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
 
         fig.savefig(self.exp + '_' + self.amb + '_' +
-                    self.model_num + ion + '_diag.pdf')
+                    str(self.model_num) + ion + '_diag.pdf')
+
+        def spec_run(self,i):
+            lum_ej = np.zeros(len(E)-1)+1e-50
+            lum_csm = np.zeros(len(E)-1)+1e-50
+
+            if (self.Te < 0.000862*keV/1.381e-16): 
+                return lum_ej, lum_csm
+
+            for j in range(n_spec):
+                ab_rel[zatom[j]] = (self.ab[j]/self.ab[self.jmax])/ab_init[zatom[j]]
+                popul[zatom[j]]  = self.xion[ind[j]:ind[j]+nj[j]+1]
+                nei.abundsetvector = ab_rel
+                    
+            try:
+                if self.igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
+                    lum_ej = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
+
+                else:
+                    lum_amb = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
+
+            except:
+                print("warning...", self.igrid, self.ne, self.Te, self.vol)
+                    
+            sys.stdout.write("\rProgress:%i/%i (particle:%i) (peak Z:%i)" %
+                             (i+1, len(self.igrid), self.igrid, zatom[self.jmax]))
+            sys.stdout.write(f"Progress:{i+1}/{n_part} (particle:{self.igrid}) (peak Z:{zatom[self.jmax]})")
+            sys.stdout.flush()
+
+            return lum_ej, lum_amb
+                
+
 
     def spectrum_XRISM(self, i_CD):
         """Outputs the spectrum for a given model convolved with XRISM
@@ -136,16 +167,17 @@ class NEIData:
         hdul = fits.open(myrmf)
 
         outfile = self.exp + '_' + self.amb + \
-            '/output/sed_XRISM_' + self.model_num + '.dat'
+            '/output/sedXRISM_snr_Ia_' + str(self.model_num) + '.dat'
         n_spec = 19
         dE = 0.0005
         Emax    = np.max(hdul[2].data['E_MAX'])          #* spectral bin max [keV]
         Emin    = np.min(hdul[2].data['E_MIN'])           #* spectral bin min [keV]
         NE = 50001
         E = np.linspace(Emin,Emax,NE)
-        if os.path.exists(outfile):
-            replot = 1
-        if not replot:
+
+        if not os.path.exists(outfile):
+#            replot = 1
+#        if not replot:
 
             n_part = len(self.igrid)
             print('Model:', self.exp+'_'+self.amb, self.model_num)
@@ -171,34 +203,6 @@ class NEIData:
             ab_rel    = dict(zip(np.arange(1,31),np.zeros(30)))
             popul     = dict(zip(np.arange(1,31),np.zeros(30)))
 
-            def spec_run(i):
-                lum_ej = np.zeros(len(E)-1)+1e-50
-                lum_csm = np.zeros(len(E)-1)+1e-50
-
-                if (self.Te < 0.000862*keV/1.381e-16): 
-                        return lum_ej, lum_csm
-
-                for j in range(n_spec):
-                        ab_rel[zatom[j]] = (self.ab[j]/self.ab[self.jmax])/ab_init[zatom[j]]
-                        popul[zatom[j]]  = self.xion[ind[j]:ind[j]+nj[j]+1]
-                nei.abundsetvector = ab_rel
-		
-                try:
-                        if self.igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
-                                lum_ej = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
-
-                        else:
-                                lum_amb = self.ne*self.nH*self.ab[self.jmax]*nei.return_spectrum(self.Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*self.vol #ph/s/bin
-
-                except:
-                        print("warning...", self.igrid, self.ne, self.Te, self.vol)
-			
-                sys.stdout.write("\rProgress:%i/%i (particle:%i) (peak Z:%i)" %
-                                 (i+1, len(self.igrid), self.igrid, zatom[self.jmax]))
-                sys.stdout.write(f"Progress:{i+1}/{n_part} (particle:{self.igrid}) (peak Z:{zatom[self.jmax]})")
-                sys.stdout.flush()
-
-                return lum_ej, lum_amb
 
             pool = ProcessingPool(nodes=pa.helpers.cpu_count())
             result = np.array(pool.map(spec_run, range(n_part)))  # ,dtype=float)
