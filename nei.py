@@ -186,11 +186,13 @@ class NEIData:
                 ab   = self.ab[i]
                 jmax = np.argmax(ab)
                 igrid = self.igrid[i]
+
                 lum_ej = np.zeros(len(E)-1)+1e-50
                 lum_am = np.zeros(len(E)-1)+1e-50
 
                 if (Te < 0.000862*keV/1.381e-16):
                     return lum_ej, lum_am
+
 
                 for j in range(n_spec):
                         ab_rel[zatom[j]] = (ab[j]/ab[jmax])/ab_init[zatom[j]]
