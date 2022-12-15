@@ -128,8 +128,6 @@ class NEIData:
         import pyatomdb.atomdb
         import pyatomdb.spectrum as spec
         import astropy.io.fits as fits
-        from pathos.multiprocessing import ProcessingPool
-        import pathos as pa
         keV 	= 1e3*1.602e-12
 
         # XRISM
@@ -176,8 +174,8 @@ class NEIData:
             ab_rel    = dict(zip(np.arange(1,31),np.zeros(30)))
             popul     = dict(zip(np.arange(1,31),np.zeros(30)))
 
-            def spec_run(i):
-            # for i in range(n_part):
+
+            for i in range(n_part):
                 xion = self.xion[i]
                 ne   = self.ne[i]
                 nH   = self.nH[i]
@@ -199,24 +197,16 @@ class NEIData:
                         popul[zatom[j]]  = xion[ind[j]:ind[j]+nj[j]+1]
                 nei.abundsetvector = ab_rel
 
-                try:                
-                    if igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
-                        lum_ej += ne*nH*ab[jmax]*nei.return_spectrum(Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*vol #ph/s/bin
-                    else:
-                        lum_am += ne*nH*ab[jmax]*nei.return_spectrum(Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*vol #ph/s/bin
-                except:
-                    print("warning...", igrid, ne, Te, vol)
+
+                if igrid < i_CD:	#you can output the DEM profile separately by storing ne*ni*vol against rad
+                    lum_ej += ne*nH*ab[jmax]*nei.return_spectrum(Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*vol #ph/s/bin
+                else:
+                    lum_am += ne*nH*ab[jmax]*nei.return_spectrum(Te,1e11,init_pop=popul,freeze_ion_pop=True,teunit='K')*vol #ph/s/bin
+
 
                 sys.stdout.write("\rProgress:%i/%i (particle:%i) (peak Z:%i)"%(i+1,n_part,igrid,zatom[jmax]))
                 sys.stdout.flush()
 
-                return lum_ej, lum_am
-                                                              
-            pool = ProcessingPool(nodes=pa.helpers.cpu_count())
-            result = np.array(pool.map(spec_run, range(n_part)))#,dtype=float)
-
-            lum_ej = sum(result[:,0],0) #ph/s/bin
-            lum_am = sum(result[:,1],0)
 
             Ec = 0.5*(E[1:]+E[:-1])
             #lum_ej *= (Ec**2/dE)*1e3*1.602e-12
