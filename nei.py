@@ -81,7 +81,7 @@ class NEIData:
         ionization = np.sum(frac*charges, axis=1)
 
         ax1.semilogy(self.mcoord/msun, self.Te)
-        ax2.semilogy(self.mcoord/msun, self.rho)
+        ax2.semilogy(self.mcoord/msun, self.rho,label=f'{self.age:.f}')
         ax3.semilogy(self.mcoord/msun, self.ztau)
         ax4.semilogy(self.mcoord/msun, self.Te/np.mean(self.Ti, axis=1))
         ax5.plot(self.mcoord/msun, ionization)
