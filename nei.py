@@ -90,7 +90,7 @@ class NEIData:
         ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
         ax1.set_ylim(1e6, 1e9)
         ax1.set_title(self.exp + '_' + self.amb +
-                      '_' + self.model_num + '_' + ion)
+                      '_' + str(self.model_num) + '_' + ion)
 
         ax2.legend(ncol=2, title='Age [yr]')
         ax2.set_ylabel(r'$\mathrm{\rho [g/cm^3]}$')
