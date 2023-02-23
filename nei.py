@@ -1,4 +1,4 @@
-import numpy as np
+igimport numpy as np
 import matplotlib.pyplot as plt
 import os
 from glob import glob
@@ -45,7 +45,7 @@ class NEIData:
         self.Ti = dat[:, 330:349]
         self.ztau = dat[:, 349]
 
-    def plot_diagnostic(self, ion):
+    def plot_diagnostic(self, ion, fig=None):
         """Reads the data from the NEI profile and plots electron temp (Te), density (rho),
         ionizaiton timescale (tau), electron temperature / mean ion temperature, and 
         ionization state (ionization) as a function of Lagrangian mass coordinate
@@ -57,9 +57,12 @@ class NEIData:
             ion (str): Ion of interest for ionization state
         """
         msun = 1.989e33
-        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
-            5, 1, sharex=True, figsize=(8, 10))
-
+        if fig is None:
+            fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
+                5, 1, sharex=True, figsize=(8, 10))
+        else:
+            ax1, ax2, ax3, ax4, ax5 = fig.axes
+        # This will plot on the same figure after setting it up. 
         n_spec = 19
         ion_name = ['H', 'He', 'C', 'N', 'O', 'Ne', 'Mg', 'Si', 'S',
                     'Ar', 'Ca', 'Fe', 'Ni', 'Na', 'Al', 'P', 'Ti', 'Cr', 'Mn']
@@ -102,10 +105,9 @@ class NEIData:
         ax5.set_ylabel(r'$\mathrm{<Z_>}$')
         ax5.set_xlabel(r'$\mathrm{M[M_{\odot}]}$')
 
-#        return fig
-        fig.savefig(self.exp + '_' + self.amb + '_' +
-                    str(self.model_num) + ion + '_diag.pdf')
-
+        # fig.savefig(self.exp + '_' + self.amb + '_' +
+        #             str(self.model_num) + ion + '_diag.pdf')
+        return fig
 
                 
 
