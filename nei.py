@@ -83,8 +83,8 @@ class NEIData:
         charges = np.arange(nj[i_spec]+1)
         ionization = np.sum(frac*charges, axis=1)
 
-        ax1.semilogy(self.mcoord/msun, self.Te)
-        ax2.semilogy(self.mcoord/msun, self.rho,label=f'{self.age:.f}')
+        ax1.semilogy(self.mcoord/msun, self.Te,label=f'{self.amb}')
+        ax2.semilogy(self.mcoord/msun, self.rho)
         ax3.semilogy(self.mcoord/msun, self.ztau)
         ax4.semilogy(self.mcoord/msun, self.Te/np.mean(self.Ti, axis=1))
         ax5.plot(self.mcoord/msun, ionization)
@@ -93,9 +93,9 @@ class NEIData:
         ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
         ax1.set_ylim(1e6, 1e9)
         ax1.set_title(self.exp + '_' + self.amb +
-                      '_' + str(self.model_num) + '_' + ion)
+                      '_' + str(self.model_num) + '_' + ion +'\n' + str(self.age[0]) + ' yr')
 
-        ax2.legend(ncol=2, title='Age [yr]')
+        ax1.legend(ncol=2, title='rho_amb')
         ax2.set_ylabel(r'$\mathrm{\rho [g/cm^3]}$')
 
         ax3.set_ylabel(r'$\mathrm{\tau [cm^{-3}s]}$')
