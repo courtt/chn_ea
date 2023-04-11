@@ -15,6 +15,7 @@ class HydroData:
             amb (str): end of directory corresponding to ambient medium and any extras
             model_num (int): Model number (1000-1100) of interest
         """
+
         filename = exp + "_" + amb + \
             "/output/snr_Ia_" + str(model_num) + ".dat"
         dat = np.loadtxt(filename)
@@ -27,8 +28,20 @@ class HydroData:
         self.vel = dat[:, 3]
         self.temp = dat[:, 4]
 
-    def rho_vel_T(self):
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(8, 10))
+    def rho_vel_T(self,fig=None):
+        """Plots hydro values as function of radius
+
+        Args:
+            exp (str): base of directory corresponding to explosion model
+            amb (str): end of directory corresponding to ambient medium and any extras
+            model_num (int): Model number (1000-1100) of interest
+        """
+
+        if fig is None:
+            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(8, 10))
+        else:
+            ax1, ax2, ax3 = fig.axes
+            
         ax1.loglog(self.rad, self.rho)
         ax2.semilogy(self.rad, self.vel/self.cm_to_km)
         ax3.loglog(self.rad, self.temp)
@@ -37,7 +50,8 @@ class HydroData:
         ax2.set_ylabel('Velocity [km/s]')
         ax3.set_ylabel('Temperature [K]')
         ax3.set_xlabel('Radius [cm]')
-        fig.savefig(f'{self.exp}_{self.amb}_{str(self.model_num)}_rvt.png')
+        # fig.savefig(f'{self.exp}_{self.amb}_{str(self.model_num)}_rvt.png')
+        return fig
 
 
 class HydroFullRun:
