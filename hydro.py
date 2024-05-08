@@ -81,3 +81,48 @@ class HydroFullRun:
 # using and calling class
 # hd = HydroData(exp,amb,model_num)
 # hd.rad
+
+class HydroVh1Data: 
+    def __init__(self, mdot, vwind, model_num) -> None:
+        """Reads the data from the VH1 simulations
+
+        Args:
+            mdot (str): mass loss rate for wind model
+            vwind (str): velocity of wind in km/s
+            model_num (int): Model number (1000-1100) of interest
+        """
+        filename = "mdot_" + mdot + "_vwind_" + vwind + "_cool_" + str(model_num) + ".dat"
+        dat = np.loadtxt(filename)
+        self.mdot = mdot
+        self.vwind = vwind
+        self.model_num = model_num
+        self.rad = dat[:, 0]
+        self.rho = dat[:, 1]
+        self.temp = dat[:, 2]
+        self.vel = dat[:, 3]
+
+
+    def rho_vel_T(self,fig=None):
+        """Plots hydro values as function of radius
+
+        Args:
+            mdot (str): mass loss rate for wind model
+            vwind (str): velocity of wind in km/s
+            model_num (int): Model number (1000-1100) of interest
+        """
+
+        if fig is None:
+            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(8, 10))
+        else:
+            ax1, ax2, ax3 = fig.axes
+            
+        ax1.loglog(self.rad, self.rho)
+        ax2.semilogy(self.rad, self.vel)
+        ax3.loglog(self.rad, self.temp)
+
+        ax1.set_ylabel(r'\rho [g/cm$^3$]')
+        ax2.set_ylabel('Velocity [km/s]')
+        ax3.set_ylabel('Temperature [K]')
+        ax3.set_xlabel('Radius [cm]')
+        # fig.savefig(f'{self.exp}_{self.amb}_{str(self.model_num)}_rvt.png')
+        return fig
