@@ -43,7 +43,7 @@ class HydroData:
             ax1, ax2, ax3 = fig.axes
             
         ax1.loglog(self.rad, self.rho)
-        ax2.semilogy(self.rad, self.vel/self.cm_to_km)
+        ax2.semilogx(self.rad, self.vel/self.cm_to_km)
         ax3.loglog(self.rad, self.temp)
 
         ax1.set_ylabel(r'\rho [g/cm$^3$]')
@@ -120,9 +120,51 @@ class HydroVh1Data:
         ax2.semilogy(self.rad, self.vel)
         ax3.loglog(self.rad, self.temp)
 
-        ax1.set_ylabel(r'\rho [g/cm$^3$]')
+        ax1.set_ylabel(r'$\rho$ [g/cm$^3$]')
         ax2.set_ylabel('Velocity [km/s]')
-        ax3.set_ylabel('Temperature [K]')
+        ax3.set_ylabel('Pressure [dyne/cm^3]')
         ax3.set_xlabel('Radius [cm]')
+        ax3.set_ylim(1e-15,1e-10)
         # fig.savefig(f'{self.exp}_{self.amb}_{str(self.model_num)}_rvt.png')
+        return fig
+
+
+class ShockData: 
+    def __init__(self, exp, amb):
+        """Reads the shock data from ChN simulations
+
+        Args:
+            exp (str): base of directory corresponding to explosion model
+            amb (str): end of directory corresponding to ambient medium and any extras
+        """
+        filename = f'{exp}_{amb}/output/snr_Ia_shock.dat'
+        dat = np.loadtxt(filename)
+
+        self.age_yr = dat[:,0]
+        self.rad_FS = dat[:,1]
+        self.rad_RS = dat[:,2]
+        self.rad_CD = dat[:,3]
+        self.vel_FS = dat[:,4]
+        self.vel_RS = dat[:,5]
+
+    def shock_plot(self,fig=None):
+        if fig is None:
+            fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8, 10))
+        else:
+            ax1, ax2 = fig.axes
+
+
+        fig, (ax1,ax2) = plt.subplots(2,1,sharex=True)
+        ax1.plot(self.age_yr, self.rad_FS, '-',label='FS')
+        ax1.plot(self.age_yr, self.rad_RS, '--',label='RS')
+        ax1.plot(self.age_yr, self.rad_CD, ':',label='CD')
+        ax1.set_xlabel('Age [yr]')
+        ax1.set_ylabel('Radius [cm]')
+
+        ax2.plot(self.age_yr, self.vel_FS, '-',label='FS')
+        ax2.plot(self.age_yr, self.vel_RS, '--',label='RS')
+        ax2.set_xlabel('Age [yr]')
+        ax2.set_ylabel('Velocity [km/s]')
+        ax1.legend()
+        ax2.legend()
         return fig

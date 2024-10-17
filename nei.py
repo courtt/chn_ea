@@ -83,11 +83,11 @@ class NEIData:
         charges = np.arange(nj[i_spec]+1)
         ionization = np.sum(frac*charges, axis=1)
 
-        ax1.semilogy(self.mcoord/msun, self.Te,label=f'{self.amb}')
-        ax2.semilogy(self.mcoord/msun, self.rho)
-        ax3.semilogy(self.mcoord/msun, self.ztau)
-        ax4.semilogy(self.mcoord/msun, self.Te/np.mean(self.Ti, axis=1))
-        ax5.plot(self.mcoord/msun, ionization)
+        ax1.loglog(self.mcoord/msun, self.Te,label=f'{self.amb}')
+        ax2.loglog(self.mcoord/msun, self.rho)
+        ax3.loglog(self.mcoord/msun, self.ztau)
+        ax4.loglog(self.mcoord/msun, self.Te/np.mean(self.Ti, axis=1))
+        ax5.semilogx(self.mcoord/msun, ionization)
 
         ax1.set_xscale('log')
         ax1.set_ylabel(r'$\mathrm{T_e [K]}$')
